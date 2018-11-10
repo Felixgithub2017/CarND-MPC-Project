@@ -120,13 +120,24 @@ int main()
 
           double Lf = 2.67;
 
-          // x distance traveled by car in 100 ms 
-          double latency = 100.00 / 1000.00;
-          double nv = v + throttle_value * latency;
 
-          double npsi = psi + nv / Lf * -steer_value * latency;
-          double npx = px + nv * cos(npsi) * latency;
-          double npy = py + nv * sin(npsi) * latency;
+          /*
+          Running a simulation using the vehicle model
+          starting from the current state for the duration of the latency.
+          The resulting state from the simulation is the new initial state for MPC.
+          */
+
+          // set the latency as 100 ms 
+          // first update x, y, followed by psi and then v.
+          double latency = 100.00 / 1000.00;
+
+          double npx = px + v * cos(npsi) * latency; // use the current v
+          double npy = py + v * sin(npsi) * latency; // use the current v
+
+          double npsi = psi + v / Lf * -steer_value * latency; // use the current v
+
+          double nv = v + throttle_value * latency; // use the current v to derive the new v
+
           // std::cout << "v " << px << " nv " << npx << " t " << throttle_value <<std::endl;
 
           for (int i = 0; i < ptsx.size(); i++)
@@ -144,7 +155,7 @@ int main()
           Eigen::VectorXd state(6);
           state << 0, 0, 0, nv, cte, epsi;
 
-          auto vars = mpc.Solve(state, coeffs);
+          auto vars = mpc.Solve(state, coeffs); // solve the problem
 
           vector<double> next_x_vals;
           vector<double> next_y_vals;
